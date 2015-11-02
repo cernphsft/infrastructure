@@ -1,0 +1,41 @@
+#cloud-config
+
+# Add security patches and bug fixes
+package_update: true
+
+# Timezone: set the timezone for this instance
+timezone: Europe/Zurich
+
+# Welcome screen
+write_files:
+- path: /etc/motd
+  content: |
+  
+      ________      _____                  _________
+      \______ \    /     \ _____  _____   /   _____/
+       |    |  \  /  \ /  \\__  \ \__  \  \_____  \ 
+       |    `   \/    Y    \/ __ \_/ __ \_/        \
+      /_______  /\____|__  (____  (____  /_______  /
+              \/         \/     \/     \/        \/ 
+        _________                                   
+       /   _____/ ______________  __ ___________    
+       \_____  \_/ __ \_  __ \  \/ // __ \_  __ \   
+       /        \  ___/|  | \/\   /\  ___/|  | \/   
+      /_______  /\___  >__|    \_/  \___  >__|      
+              \/     \/                 \/          
+
+               http://root.cern.ch
+               http://cernbox.web.cern.ch
+
+# Install puppet and puppet modules, apply puppet file
+runcmd:
+  - [ yum, install, -y, puppet-server ]
+  - [ puppet, module, install, puppetlabs-firewall ]
+  - [ puppet, module, install, garethr-docker ]
+  - [ puppet, module, install, maestrodev-wget ]
+  - [ puppet, module, install, puppetlabs-vcsrepo ]
+  - [ wget, 'http://raw.githubusercontent.com/cernphsft/infrastructure/master/single-node/puppet/dmaas-proto.pp', -P, /tmp/ ]
+  - [ puppet, apply, /tmp/dmaas-proto.pp ]
+
+final_message: 'The DMaaS Server is now ready to use.'
+
