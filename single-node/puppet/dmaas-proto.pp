@@ -6,18 +6,18 @@ Exec { path => [ '/bin/', '/sbin/' , '/usr/bin/', '/usr/sbin/', '/usr/local/bin/
 ###### Firewall ######
 
 firewall { '100 allow https access':
-  dport   => [4443],
+  dport  => 4443,
   proto  => tcp,
   action => accept,
 }
 
 firewall { '101 forward port 443 to 4443':
-  table   => 'nat',
-  chain   => 'PREROUTING',
-  proto   => 'tcp',
-  dport   => '443',
-  jump    => 'REDIRECT',
-  toports => '4443',
+  table   => nat,
+  chain   => PREROUTING,
+  proto   => tcp,
+  dport   => 443,
+  jump    => REDIRECT,
+  toports => 4443,
   require => Firewall['100 allow https access']
 }
 
@@ -36,19 +36,27 @@ package { $packages:
 service { 'docker':
   ensure  => running,
   enable  => true,
-  require => [ Package[$packages] ]
+  require => Package[$packages],
 }
 
 
 ###### Apache HTTP server ######
 
 docker::image { 'httpd':
-  require => [ Service['docker'] ],
+  require => Service['docker'],
 }
 
+#$apacheconfig = 'httpd.conf'
+#wget::fetch { 'Apache config':
+#  source      => "http://raw.githubusercontent.com/cernphsft/infrastructure/master/single-node/config/$apacheconfig",
+#  destination => "${tmpdir}${apacheconfig}",
+#}
+
+# -- TODO: Inject configuration into the container
 docker::run { 'Apache-HTTP':
   image        => 'httpd',
   ports        => ['4443:80'],
+  #volumes     => "${tmpdir}${apacheconfig}:/...."
   require      => Docker::Image['httpd'],
 }
 
@@ -85,26 +93,57 @@ wget::fetch { 'Pip script':
 
 exec { 'Install Pip3':
   command => "python3 ${tmpdir}get-pip.py",
-  require => Wget::Fetch['Pip script'],
+  require => [ Exec['Install Python3'], Wget::Fetch['Pip script'] ],
 }
 
 
-###### JupyterHub & Docker Spawner ######
+###### JupyterHub ######
 
-$dspawnerdir = "${tmpdir}dockerspawner"
-vcsrepo { $dspawnerdir:
-  ensure   => present,
-  provider => git,
-  source   => 'https://github.com/jupyter/dockerspawner',
+$jhdir  = '/srv/jupyterhub/'
+file { $jhdir:
+  ensure => directory,
 }
 
 exec { 'Install JupyterHub':
   cwd     => $dspawnerdir,
+  command => 'pip3 install jupyterhub',
+  require => Exec['Install Pip3'],
+}
+
+$jhconfig = 'jupyterhub_config.py'
+wget::fetch { 'Jupyterhub config':
+  source      => "http://raw.githubusercontent.com/cernphsft/infrastructure/master/single-node/config/$jhconfig",
+  destination => "${jhdir}${jhconfig}",
+  require     => File[$jhdir],
+}
+
+
+###### Docker Spawner ######
+
+$dspawnerdir = "${jhdir}dockerspawner"
+vcsrepo { $dspawnerdir:
+  ensure   => present,
+  provider => git,
+  source   => 'https://github.com/jupyter/dockerspawner',
+  require  => File[$jhdir],
+}
+
+exec { 'Install Docker Spawner dependencies':
+  cwd     => $dspawnerdir,
   command => 'pip3 install -r requirements.txt',
+  require => Vcsrepo[$dspawnerdir],
 }
 
 exec { 'Install Docker Spawner':
   cwd     => $dspawnerdir,
   command => 'python3 setup.py install',
+  require => [ Exec['Install JupyterHub'], Exec['Install Docker Spawner dependencies'] ],
 }
 
+
+###### JupyterHub Server ######
+#exec { 'Run JupyterHub':
+#  cwd     => $jhdir,
+#  command => "nohup jupyterhub --config ${jhdir}${jhconfig} &",
+#  require => [ Exec['Install JupyterHub'], Wget::Fetch['Jupyterhub config'] ],
+#}
