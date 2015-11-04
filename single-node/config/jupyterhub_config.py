@@ -4,16 +4,16 @@ c = get_config()
 # The docker instances need access to the Hub, so the default loopback port doesn't work
 from IPython.utils.localinterfaces import public_ips
 c.JupyterHub.hub_ip = public_ips()[0]
-c.JupyterHub.port = 443 
+c.JupyterHub.port = 8000 
 
 # SSL
-admin_user = 'jhadmin'
-pem_file   = '/home/' + admin_user + '/certs/mycert.pem'
-c.JupyterHub.ssl_cert = pem_file
-c.JupyterHub.ssl_key  = pem_file
+#c.JupyterHub.port = 443
+#pem_dir   = '/srv/jupyterhub/certs/'
+#c.JupyterHub.ssl_cert = pem_dir + 'jh.crt'
+#c.JupyterHub.ssl_key  = pem_dir + 'jh.pem' 
 
 # Authenticator
-c.Authenticator.admin_users = {admin_user}
+c.Authenticator.admin_users = {'etejedor', 'dpiparo', 'moscicki', 'mascetti'}
 
 # Spawner
 c.JupyterHub.spawner_class = 'dockerspawner.SystemUserSpawner'
