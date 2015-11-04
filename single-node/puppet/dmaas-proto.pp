@@ -23,9 +23,11 @@ firewall { '101 forward port 443 to 4443':
 
 
 ###### Packages ######
-# Python --> 'zlib-devel', 'openssl-devel', 'sqlite-devel'
+# Docker     --> docker-io
+# JupyterHub --> npm
+# Python     --> zlib-devel, openssl-devel, sqlite-devel
 
-$packages = [ 'docker-io', 'zlib-devel', 'openssl-devel', 'sqlite-devel', 'git' ]
+$packages = [ 'docker-io', 'zlib-devel', 'openssl-devel', 'sqlite-devel', 'git', 'npm' ]
 package { $packages:
   ensure => installed,
 }
@@ -84,6 +86,7 @@ exec { 'Unpack Python3':
 exec { 'Install Python3':
   cwd     => $pythondir,
   command => "bash -c 'source $gcc49 && ${pythondir}configure && make && make install'",
+  require => Package[$packages],
 }
 
 wget::fetch { 'Pip script':
@@ -104,10 +107,21 @@ file { $jhdir:
   ensure => directory,
 }
 
+# Required by jupyterhub_config.py 
+exec { 'Install IPython':
+  command => 'pip3 install ipython==3.2',
+#  require => Exec['Install Pip3'],
+}
+
+exec { 'Install configurable-http-proxy':
+  command => 'npm install -g configurable-http-proxy',
+  require => Package[$packages],
+}
+
 exec { 'Install JupyterHub':
   cwd     => $dspawnerdir,
   command => 'pip3 install jupyterhub',
-  require => Exec['Install Pip3'],
+#  require => Exec['Install Pip3'],
 }
 
 $jhconfig = 'jupyterhub_config.py'
@@ -142,8 +156,8 @@ exec { 'Install Docker Spawner':
 
 
 ###### JupyterHub Server ######
-#exec { 'Run JupyterHub':
-#  cwd     => $jhdir,
-#  command => "nohup jupyterhub --config ${jhdir}${jhconfig} &",
-#  require => [ Exec['Install JupyterHub'], Wget::Fetch['Jupyterhub config'] ],
-#}
+exec { 'Run JupyterHub':
+  cwd     => $jhdir,
+  command => "nohup jupyterhub --config ${jhdir}${jhconfig} &",
+  require => [ Exec['Install IPython'], Exec['Install JupyterHub'], Wget::Fetch['Jupyterhub config'] ],
+}
