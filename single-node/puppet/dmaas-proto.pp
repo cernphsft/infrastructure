@@ -110,7 +110,7 @@ file { $jhdir:
 # Required by jupyterhub_config.py 
 exec { 'Install IPython':
   command => 'pip3 install ipython==3.2',
-#  require => Exec['Install Pip3'],
+  require => Exec['Install Pip3'],
 }
 
 exec { 'Install configurable-http-proxy':
@@ -121,7 +121,7 @@ exec { 'Install configurable-http-proxy':
 exec { 'Install JupyterHub':
   cwd     => $dspawnerdir,
   command => 'pip3 install jupyterhub',
-#  require => Exec['Install Pip3'],
+  require => Exec['Install Pip3'],
 }
 
 $jhconfig = 'jupyterhub_config.py'
