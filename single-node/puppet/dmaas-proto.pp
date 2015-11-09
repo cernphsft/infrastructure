@@ -86,6 +86,7 @@ exec { 'Unpack Python3':
 exec { 'Install Python3':
   cwd     => $pythondir,
   command => "bash -c 'source $gcc49 && ${pythondir}configure && make && make install'",
+  timeout => 0,
   require => Package[$packages],
 }
 
