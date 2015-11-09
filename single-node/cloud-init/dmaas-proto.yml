@@ -34,7 +34,7 @@ runcmd:
   - [ puppet, module, install, garethr-docker ]
   - [ puppet, module, install, maestrodev-wget ]
   - [ puppet, module, install, puppetlabs-vcsrepo ]
-  - [ wget, http://raw.githubusercontent.com/cernphsft/infrastructure/master/single-node/puppet/dmaas-proto.pp, -P, /tmp/ ]
+  - [ wget, 'http://raw.githubusercontent.com/cernphsft/infrastructure/master/single-node/puppet/dmaas-proto.pp', -P, /tmp/ ]
   - [ puppet, apply, /tmp/dmaas-proto.pp ]
 
 final_message: 'The DMaaS Server is now ready to use.'
