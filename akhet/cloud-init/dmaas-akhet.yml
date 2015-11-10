@@ -1,0 +1,39 @@
+#cloud-config
+
+# Add security patches and bug fixes
+package_update: true
+
+# Timezone: set the timezone for this instance
+timezone: Europe/Zurich
+
+# Welcome screen
+write_files:
+- path: /etc/motd
+  content: |
+      ________      _____                  _________
+      \______ \    /     \ _____  _____   /   _____/
+       |    |  \  /  \ /  \\__  \ \__  \  \_____  \ 
+       |    `   \/    Y    \/ __ \_/ __ \_/        \
+      /_______  /\____|__  (____  (____  /_______  /
+              \/         \/     \/     \/        \/ 
+         _____   __   .__            __             
+        /  _  \ |  | _|  |__   _____/  |_           
+       /  /_\  \|  |/ /  |  \_/ __ \   __\          
+      /    |    \    <|   Y  \  ___/|  |            
+      \____|__  /__|_ \___|  /\___  >__|            
+              \/     \/    \/     \/  
+
+               http://root.cern.ch
+
+# Install puppet and puppet modules, apply puppet file
+runcmd:
+  - [ yum, install, -y, puppet-server ]
+  - [ puppet, module, install, puppetlabs-firewall ]
+  - [ puppet, module, install, garethr-docker ]
+  - [ puppet, module, install, maestrodev-wget ]
+  - [ puppet, module, install, puppetlabs-vcsrepo ]
+  - [ wget, 'http://raw.githubusercontent.com/cernphsft/infrastructure/master/akhet/puppet/dmaas-akhet.pp', -P, /tmp/ ]
+  - [ puppet, apply, /tmp/dmaas-akhet.pp ]
+
+final_message: 'The DMaaS & Akhet Server is now ready to use.'
+
