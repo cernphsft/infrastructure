@@ -59,7 +59,7 @@ service { 'docker':
   require => Package[$packages],
 }
 
-docker::image { 'cernphsft/systemuser':
+docker::image { 'jupyter/systemuser':
   require => Service['docker'],
 }
 
