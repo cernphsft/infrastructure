@@ -143,7 +143,7 @@ file { $certdir:
 }
 
 exec { 'Create certificate and key':
-  command => "openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout ${certdir}jhkey.key -out ${certdir}jhcert.crt",
+  command => "openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout ${certdir}jhkey.key -out ${certdir}jhcert.crt -subj '/C=CH/ST=Geneva/L=Geneva/O=CERN/OU=PH-SFT/CN=root.cern.ch'",
   require => [ Package[$packages], File[$certdir] ],
 }
 
